@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>
+洛天依 AI
+</title>
+
+
+<style>
+
+*{
+    box-sizing:border-box;
+}
+
+
+body{
+
+    margin:0;
+
+    height:100vh;
+
+    background:
+    linear-gradient(
+        135deg,
+        #dff6ff,
+        #ffffff,
+        #d8f7ef
+    );
+
+    font-family:
+    "Microsoft YaHei",
+    sans-serif;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+}
+
+
+
+.container{
+
+    width:90%;
+
+    max-width:900px;
+
+    height:90vh;
+
+    background:
+    rgba(255,255,255,0.75);
+
+    backdrop-filter:
+    blur(15px);
+
+    border-radius:25px;
+
+    box-shadow:
+    0 10px 40px
+    rgba(0,0,0,0.12);
+
+    display:flex;
+
+    flex-direction:column;
+
+    overflow:hidden;
+
+}
+
+
+
+
+.header{
+
+    padding:20px;
+
+    background:
+
+    linear-gradient(
+    90deg,
+    #8ee8ff,
+    #b5ffe0
+    );
+
+    text-align:center;
+
+}
+
+
+
+.header h1{
+
+    margin:0;
+
+    font-size:26px;
+
+    color:#286070;
+
+}
+
+
+
+.header p{
+
+    margin:5px;
+
+    color:#557;
+
+}
+
+
+
+
+#chat{
+
+    flex:1;
+
+    padding:20px;
+
+    overflow-y:auto;
+
+}
+
+
+
+.message{
+
+    margin:15px 0;
+
+    display:flex;
+
+}
+
+
+
+.user{
+
+    justify-content:flex-end;
+
+}
+
+
+
+.ai{
+
+    justify-content:flex-start;
+
+}
+
+
+
+
+.bubble{
+
+    max-width:70%;
+
+    padding:12px 18px;
+
+    border-radius:20px;
+
+    line-height:1.6;
+
+}
+
+
+
+.user .bubble{
+
+    background:#9ee7ff;
+
+}
+
+
+
+.ai .bubble{
+
+    background:white;
+
+    box-shadow:
+    0 3px 10px
+    rgba(0,0,0,0.08);
+
+}
+
+
+
+
+.input-area{
+
+    padding:15px;
+
+    display:flex;
+
+    gap:10px;
+
+    background:
+    rgba(255,255,255,0.6);
+
+}
+
+
+
+input{
+
+    flex:1;
+
+    border:none;
+
+    outline:none;
+
+    padding:14px;
+
+    border-radius:20px;
+
+    font-size:15px;
+
+}
+
+
+
+button{
+
+    border:none;
+
+    padding:
+    0 25px;
+
+    border-radius:20px;
+
+    cursor:pointer;
+
+    background:#65d9ff;
+
+    color:white;
+
+    font-size:16px;
+
+}
+
+
+button:hover{
+
+    opacity:0.8;
+
+}
+
+
+</style>
+
+
+</head>
+
+
+
+<body>
+
+
+<div class="container">
+
+
+<div class="header">
+
+<h1>
+🎵 洛天依 AI
+</h1>
+
+
+<p>
+和洛天依聊聊天吧~
+</p>
+
+
+</div>
+
+
+
+<div id="chat">
+
+</div>
+
+
+
+
+<div class="input-area">
+
+
+<input
+id="message"
+placeholder="输入想说的话..."
+onkeydown="if(event.key==='Enter')send()"
+/>
+
+
+<button onclick="send()">
+发送
+</button>
+
+
+</div>
+
+
+</div>
+
+
+
+
+<script>
+
+
+// =========================
+// 用户身份
+// =========================
+
+let user_id = localStorage.getItem(
+    "user_id"
+);
+
+
+
+
+// =========================
+// 添加消息
+// =========================
+
+function addMessage(type,text){
+
+
+    document.getElementById("chat")
+    .innerHTML +=
+
+
+    `
+
+    <div class="message ${type}">
+
+        <div class="bubble">
+
+            ${text}
+
+        </div>
+
+    </div>
+
+    `;
+
+
+    let box=document.getElementById("chat");
+
+    box.scrollTop=box.scrollHeight;
+
+
+}
+
+
+
+
+// =========================
+// 发送消息
+// =========================
+
+async function send(){
+
+
+    let input=document.getElementById(
+        "message"
+    );
+
+
+    let text=input.value.trim();
+
+
+
+    if(!text)
+        return;
+
+
+
+    addMessage(
+        "user",
+        text
+    );
+
+
+    input.value="";
+
+
+
+    try{
+
+
+        let res=await fetch(
+
+            "/chat",
+
+            {
+
+                method:"POST",
+
+                headers:{
+
+                    "Content-Type":
+                    "application/json"
+
+                },
+
+
+                body:JSON.stringify({
+
+                    user_id:user_id,
+
+                    message:text
+
+                })
+
+            }
+
+        );
+
+
+
+        let data=await res.json();
+
+
+
+        // 保存用户ID
+
+        user_id=data.user_id;
+
+
+        localStorage.setItem(
+
+            "user_id",
+
+            user_id
+
+        );
+
+
+
+        addMessage(
+
+            "ai",
+
+            data.reply
+
+        );
+
+
+
+    }
+
+
+    catch(error){
+
+
+        addMessage(
+
+            "ai",
+
+            "嗯……连接好像出了一点问题，再试一次吧。"
+
+        );
+
+
+        console.error(error);
+
+
+    }
+
+
+}
+
+
+
+</script>
+
+
+
+</body>
+
+
+</html>
